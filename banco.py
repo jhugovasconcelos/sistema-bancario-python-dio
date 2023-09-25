@@ -1,83 +1,195 @@
-"""
-TODO: separar as opções de saque, depósito e extrato em funções.
-TODO: criar 2 novas funções, de cadastrar usuário e cadastrar conta bancária.
-Idea: a variável CONTA é um dicionário, você irá adicionar um usuário com chave "Usuário" e valor "Nome" toda vez que
-for chamado o comando "u"; além disso, toda vez que as outras opções forem chamadas, elas entrarão abaixo dessa chave
-e valor; Se for chamado outro, elas entrarão abaixo do outro, e assim por diante;
-"""
+EXTRATO = []
+USERS_LIST = []
+USERS_FULL = []
+LISTA_CONTAS = []
+SALDO = 0
+NUMERO_SAQUES = 0
 
-print(''' ----------- Bem vindo ao Sistema Bancário!--------
- *************************************************
+print('''
+#  $$$$$$$\                                                $$$$$$$\              $$\     $$\                           
+#  $$  __$$\                                               $$  __$$\             $$ |    $$ |                          
+#  $$ |  $$ | $$$$$$\  $$$$$$$\   $$$$$$$\  $$$$$$\        $$ |  $$ |$$\   $$\ $$$$$$\   $$$$$$$\   $$$$$$\  $$$$$$$\  
+#  $$$$$$$\ | \____$$\ $$  __$$\ $$  _____|$$  __$$\       $$$$$$$  |$$ |  $$ |\_$$  _|  $$  __$$\ $$  __$$\ $$  __$$\ 
+#  $$  __$$\  $$$$$$$ |$$ |  $$ |$$ /      $$ /  $$ |      $$  ____/ $$ |  $$ |  $$ |    $$ |  $$ |$$ /  $$ |$$ |  $$ |
+#  $$ |  $$ |$$  __$$ |$$ |  $$ |$$ |      $$ |  $$ |      $$ |      $$ |  $$ |  $$ |$$\ $$ |  $$ |$$ |  $$ |$$ |  $$ |
+#  $$$$$$$  |\$$$$$$$ |$$ |  $$ |\$$$$$$$\ \$$$$$$  |      $$ |      \$$$$$$$ |  \$$$$  |$$ |  $$ |\$$$$$$  |$$ |  $$ |
+#  \_______/  \_______|\__|  \__| \_______| \______/       \__|       \____$$ |   \____/ \__|  \__| \______/ \__|  \__|
+#                                                                    $$\   $$ |                                        
+#                                                                    \$$$$$$  |                                        
 Digite uma das opções a seguir: 
-[d] Depósito
 [s] Saque
+[d] Depósito
 [e] Extrato
+[nu] Novo Usuário
+[nc] Nova Conta Bancária
+[uc] Checar Usuário
+[vu] Ver Usuários
+[lc] Listar Contas
 [q] Sair
-[u] Cadastrar Usuário
-[b] Cadastrar Conta Bancária
 ''')
 
 
-def dep(deposit, SALDO, EXTRATO):
-    if deposit >= 0:
-        SALDO += deposit
-        EXTRATO.append("Depósito: R$" + str(f'{deposit:.2f}'))
-    else:
-        print('Por favor, digite um valor positivo')
-    return 0
-
-
-def saq(wdrw, SALDO, COUNT, CONTA):
-    if wdrw > SALDO:
-        print('Saldo insuficiente, não foi possível realizar o saque')
-    elif wdrw < 0:
-        print('Por favor, digite um valor positivo')
-    elif COUNT < 3:
-        if wdrw <= 500:
-            SALDO -= wdrw
-            EXTRATO = list("Saque"+ str(f'{wdrw:.2f}'))
-            CONTA |= EXTRATO
-            COUNT += 1
+class verify:
+    def cleaner(cpf):
+        if len(cpf) == 11:
+            cpf.translate({ord(i): None for i in '.-'})
+            return True
         else:
-            print('Limite de saque diário: R$ 500.00')
+            print('CPF incorreto')
+            return False
+    def newcpf(cpf):
+        if cpf not in USERS_LIST:
+            USERS_LIST.append(cpf)
+            return True
+        else:
+            print("Usuário já cadastrado")
+            return False
+    def usercheck(cpf):
+        if cpf in USERS_LIST:
+            print("Usuário cadastrado")
+            print(USERS_LIST)
+        else:
+            print('Usuário não cadastrado')
+
+        
+
+def deposito(valor):
+    if valor >= 0:
+        global SALDO; 
+        SALDO += valor
+        EXTRATO.append("Depósito: R$" + str(f'{valor:.2f}'))
+        print(f'''Depósito efetuado com sucesso!
+                 Saldo total: {SALDO}''')
     else:
-        print('Limite de saques diário atingido')
+        print('Por favor, digite um valor positivo')
 
 
-def ext(EXTRATO, CONTA):
-    print('Opção Extrato')
-    EXTRATO = list('Saldo Atual: R$' + str(f'{SALDO:.2f}'))
-    CONTA |= EXTRATO
-    print(CONTA)
-
-
-def usu(new_user, COUNT, CONTA, SALDO):
-    COUNT, SALDO = 0
-    CONTA |= {"Usuário": new_user}
-
-
-CONTA = {}
-SALDO = 0
-EXTRATO = []
-COUNT = 0
-while True:
-    option = input('Opção >> ')
-    if option == 'q':
-        print('Opção Sair')
-        break
-    elif option == 'd':
-        print('Opção Depósito')
-        deposit = int(input('Digite o valor: '))
-        dep(deposit, SALDO, EXTRATO)
-    elif option == 's':
-        print('Opção Saque')
-        wdrw = int(input('Digite o valor: '))
-        saq(wdrw, SALDO, COUNT, CONTA)
-    elif option == 'e':
-        ext(EXTRATO, CONTA)
-    elif option == 'u':
-        print('Opção Cadastrar Usuário')
-        new_user = input('Digite o nome do Usuário: ')
-        usu(new_user, COUNT, CONTA, SALDO)
+def saque(valor):
+    global SALDO, NUMERO_SAQUES;
+    if valor > SALDO:
+        print('Saldo insuficiente, não foi possível realizar o saque')
+    elif valor < 0:
+        print('Por favor, digite um valor positivo')
+    elif valor <= 500:
+        SALDO -= valor
+        EXTRATO.append("Saque: "+ str(f'{valor:.2f}'))
+        NUMERO_SAQUES += 1
+        print(f'''Saque efetuado com êxito!
+                    Limite disponível: {SALDO}''')
     else:
-        print('Opção inválida, por favor digite novamente')
+        print('Limite de saque diário: R$ 500.00')
+
+
+
+def newuser(cpf, nome, datanasc, endereco):
+    novo_usuario = {"Nome":nome, "cpf":cpf, "Data de Nascimento": datanasc, "Endereço": endereco}
+    USERS_FULL.append(novo_usuario)
+
+
+def nova_conta(cpf, numero_conta):
+    account = {"Ag.": "0001", "C/C." : {numero_conta},  "CPF": {cpf}}
+    LISTA_CONTAS.append(account)
+
+
+
+def address():
+    logradouro = input("Digite o logradouro > ")
+    numero = input("Digite o número > ")
+    bairro = input("Digite o bairro > ")
+    cidade = input("Digite a cidade > ")
+    estado = input("Digite o estado no formato EE > ")
+    endereco = logradouro + ',' + numero + '-' + bairro + '-' + cidade + '/' + estado
+    if len(endereco) <= 256:
+        return endereco
+    else:
+        print("Tamanho máximo ultrapassado! Favor reescrever o endereço")
+        address()
+
+
+def extrato():
+    print('>>>>>> Função Extrato')
+    EXTRATO.append('Saldo Atual: R$' + str(f'{SALDO:.2f}'))
+    print('######## EXTRATO BANCO PYTHON ########')
+    for saldo in EXTRATO:
+        print(saldo)
+        print('----------------------------------------')
+
+
+if __name__ == '__main__':
+    numero_conta = 0
+    while True:
+        option = input('Opção (Digite "o" para ver as opções)>> ')
+        if option == 'o':
+            print('''
+[s] Saque
+[d] Depósito
+[e] Extrato
+[nu] Novo Usuário
+[nc] Nova Conta Bancária
+[uc] Checar Usuário
+[vu] Ver Usuários
+[lc] Listar Contas
+[q] Sair
+                  ''')
+            pass
+        elif option == 'q':
+            print('Opção Sair')
+            break
+        elif option == 'nu':
+            print('>>>>>> Função Novo Usuário')
+            while True:
+                cpf = input("Digite o CPF> ")
+                if verify.cleaner(cpf) and verify.newcpf(cpf): 
+                    break
+            nome = input("Digite o nome > ")
+            datanasc = input("Digite a data de nascimento no formato dd-mm-aaaa> ")
+            endereco = address()
+            newuser(cpf, nome, datanasc, endereco)
+        elif option == 'uc':
+            print('>>>>>> Função Checar Usuário')
+            while True:
+                cpf = input("Digite o CPF> ")
+                if verify.cleaner(cpf): 
+                    break
+            verify.usercheck(cpf)
+        elif option == 'nc':
+            numero_conta += 1
+            print('>>>>>> Função Nova Conta')
+            while True:
+                cpf = input("Digite o CPF> ")
+                if verify.cleaner(cpf): 
+                    break
+            nova_conta(cpf, numero_conta)
+        elif option == 'lc':
+            print('>>>>>> Função Listar Contas')
+            print('######## CONTAS CADASTRADAS BANCO PYTHON ########')
+            for conta in LISTA_CONTAS:
+                print(conta)
+            print('----------------------------------------')
+        elif option == 'vu':
+            print('>>>>>> Função Ver Usuários')
+            print('######## USUÁRIOS CADASTRADOS NO BANCO PYTHON ########')
+            for user in USERS_FULL:
+                print(user)
+            print('----------------------------------------')
+        elif option == 's':
+            if NUMERO_SAQUES < 3:
+                print('>>>>>> Função Saque')
+                try:
+                    value = float(input('Valor do saque > '))
+                    saque(valor=value)
+                except ValueError:
+                    print('Por favor, digite um número')
+            else:
+                print('Limite de saques diário atingido!')
+        elif option == 'd':
+            print('>>>>>> Função Depósito')
+            try:
+                valor = float(input('Digite o valor do depósito > '))
+                deposito(valor)
+            except ValueError:
+                print("Por favor, digite um número")
+        elif option == 'e':
+            extrato()
+        else:
+            print('Opção inválida, por favor digite novamente')
