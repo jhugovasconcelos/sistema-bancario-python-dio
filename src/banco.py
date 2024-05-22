@@ -1,9 +1,19 @@
 from abc import ABC, abstractmethod
-from datetime import date
+from datetime import date, datetime
+
+###### Decoradores ######
+
+def log_transacoes(func):
+    def registrar_log(*args, **kwargs):
+        log = f"Hora: {datetime.now()} \tTipo: {func.__name__}"
+        print(log)
+        logs.append(log)
+        return func(*args, **kwargs)
+    return registrar_log
 
 ######### Aqui começam as classes de objetos #####
 
-class Conta():
+class Conta:
     AGENCIA = "0001"
 
     def __init__(self, cliente, numero) -> None:
@@ -95,7 +105,7 @@ class ContaCorrente(Conta):
     def __str__(self) -> str:
         return f'\t\tAgência {self._agencia}\n\t\tC/C: {self._numero}\n\t\tTitular: {self._cliente.nome}\n{30*"*"}'
     
-class Cliente():
+class Cliente:
     
     def __init__(self, endereco) -> None:
         self._endereco = endereco
@@ -111,7 +121,7 @@ class Cliente():
         """
         transacao.registrar(conta)
 
-        
+    @log_transacoes    
     def adicionar_conta(self, conta): 
         """
         Faz um append na lista de contas do cliente
@@ -184,7 +194,7 @@ class Deposito(Transacao):
         if conseguiu_depositar:
             conta.historico.adicionar_transacao(self)
 
-class Historico():
+class Historico:
     
     def __init__(self) -> None:
         self._transacoes = []
@@ -199,10 +209,16 @@ class Historico():
             "valor": transacao.valor,
             "data": date.today()
         })
-        
-###### Funções extras  ######
+    
+    def gerar_relatorio(self, tipo_transacao: None):
+        for transacao in self._transacoes:
+            if transacao["tipo"] == tipo_transacao:
+                yield f'{30*"*"}\nTipo: {transacao["tipo"]}\nValor: {transacao["valor"]}\nData: {transacao["data"]}\n{30*"*"}'
 
-def opcao_nc(contas, clientes):
+
+###### Funções extras  ######
+@log_transacoes
+def nova_conta(contas, clientes):
     print('>>>>>> Função Nova Conta')
     pergunta = input("Já é cliente do banco? [S/N] ")
     if pergunta.upper() == "S":
@@ -215,14 +231,14 @@ def opcao_nc(contas, clientes):
         else: 
             escolha2 = input('Nome do cliente não encontrado, deseja cadastrar novo cliente? [S/N] ')
             if escolha2.upper() == 'S':
-                opcao_nu()
+                novo_usuario()
             else: 
                 print('Retornando ao menu anterior')
                 return
     elif pergunta.upper() == 'N':
         escolha3 = input('Deseja cadastrar novo cliente? [S/N] ')
         if escolha3.upper() == 'S':
-            opcao_nu()
+            novo_usuario()
         else:
             print('Retornando ao menu anterior')
             return
@@ -230,7 +246,8 @@ def opcao_nc(contas, clientes):
         print('Retornando ao menu anterior')
         return
 
-def opcao_nu(clientes):
+@log_transacoes
+def novo_usuario(clientes):
     print('>>>>>> Função Novo Usuário')
     cpf = input("Informe o CPF: ")
     cliente = cpf_validation(cpf, clientes)
@@ -244,7 +261,7 @@ def opcao_nu(clientes):
     else:
         escolha = input("Deseja recomeçar[r] ou voltar ao menu anterior[v]? \n")
         if escolha.lower() == 'r':
-            opcao_nu(clientes)
+            novo_usuario(clientes)
         elif escolha.lower() == 'v':
             return
 
@@ -291,8 +308,9 @@ def checar_conta(numero, contas):
         else:
             return None
 
-def opcao_s():
-    print('>>>>>> Função Saque')
+@log_transacoes
+def saque():
+    print('>>>>>> Função Saque 💸')
     try:
         numero = input("Digite o número da conta ")
         existe_conta = checar_conta(numero, contas)
@@ -306,9 +324,10 @@ def opcao_s():
                 print("O valor é inválido")
     except ValueError:
         print("Por favor, digite um número")
-      
-def opcao_d(contas):
-    print('>>>>>> Função Depósito')
+
+@log_transacoes
+def deposito(contas):
+    print('>>>>>> Função Depósito 💰')
     try:
         numero = input("Digite o número da conta ")
         existe_conta = checar_conta(numero, contas) 
@@ -330,27 +349,45 @@ def opcao_d(contas):
     except ValueError:
         print("Digite um número!")
 
-def opcao_e(contas):
-    print('>>>>>> Função Extrato')
+@log_transacoes
+def extrato(contas):
+    print('>>>>>> Função Extrato 📖')
     numero_conta = input("Digite o número da conta: ")
-    conta = checar_conta(numero_conta, contas)
-    print('######## EXTRATO BANCO PYTHON ########')
+    conta = checar_conta(numero_conta, contas)  
     if conta:
-        transacoes = conta.historico.transacoes
-        for transacao in transacoes:
-            print(f'Tipo: {transacao["tipo"]}\nValor: {transacao["valor"]}\nData: {transacao["data"]}\n{30*"*"}')
+        escolha_extrato = input("Deseja um extrato separado por tipo? [S/N]: ")  
+        if escolha_extrato.upper() == 'N':
+            print('######## EXTRATO BANCO PYTHON ########')
+            transacoes = conta.historico.transacoes
+            for transacao in transacoes:
+                print(f'Tipo: {transacao["tipo"]}\nValor: {transacao["valor"]}\nData: {transacao["data"]}\n{30*"*"}')
+        elif escolha_extrato.upper() == 'S':
+            tipo = input("Digite o tipo de transação [D/S]: ")
+            if tipo.upper() == 'D':
+                for transacao in conta.historico.gerar_relatorio("Deposito"):
+                    print(transacao)
+            elif tipo.upper() == 'S':
+                for transacao in conta.historico.gerar_relatorio("Saque"):
+                    print(transacao)
+        else:
+            print("Opção inválida.")
     else:
-        print("Esta conta não existe")
+        print("Esta conta não existe 🤔")
+
+def ver_logs(logs):
+    for log in logs:
+        print(log, "\n")
 
 ####### Aqui começa a função main #######
 
 if __name__ == '__main__':
 
-   # listas de contas e clientes
+   # listas utilizadas dentro das funções
     
     clientes = []
     contas = []
-    
+    logs = []
+
     # Logo do banco ao abrir o programa
 
     print('''
@@ -373,18 +410,19 @@ Digite uma das opções a seguir:
 [uc] Checar Usuário
 [vu] Ver Usuários
 [lc] Listar Contas
+[vl] Ver Logs
 [q] Sair
 ''')
     # Laço principal do programa
     while True:
-        option = input("****** Digite uma opção: \n")
+        option = input("$$$ Digite uma opção: ")
         if option == 'q':
-            print('Opção Sair')
+            print("Tchau, até mais! 🤗")
             break
         elif option == 'nu':
-            opcao_nu(clientes)
+            novo_usuario(clientes)
         elif option == 'nc':
-            opcao_nc(contas, clientes)
+            nova_conta(contas, clientes)
             
         elif option == 'lc':
             print('>>>>>> Função Listar Contas')
@@ -399,13 +437,16 @@ Digite uma das opções a seguir:
                 print(str(cliente))
 
         elif option == 's':
-            opcao_s()
+            saque()
 
         elif option == 'd':
-            opcao_d(contas)
+            deposito(contas)
 
         elif option == 'e':
-            opcao_e(contas)
+            extrato(contas)
+        
+        elif option == 'vl':
+            ver_logs(logs=logs)
 
         else:
             print('Por favor, selecione uma das opções abaixo')
