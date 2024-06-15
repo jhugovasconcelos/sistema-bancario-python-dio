@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from datetime import date, datetime
 
-###### Decoradores ######
+###### Decorador de logs ######
 
 def log_transacoes(func):
     def registrar_log(*args, **kwargs):
@@ -214,7 +214,7 @@ class Historico:
         for transacao in self._transacoes:
             if transacao["tipo"] == tipo_transacao:
                 yield f'{30*"*"}\nTipo: {transacao["tipo"]}\nValor: {transacao["valor"]}\nData: {transacao["data"]}\n{30*"*"}'
-
+ 
 
 ###### Funções extras  ######
 @log_transacoes
